@@ -3,6 +3,7 @@
 from google_play_scraper import app
 import pandas as pd
 import datetime as dt
+import os
 
 banks_ids = [
     # JCB
@@ -47,6 +48,9 @@ for bank in banks_ids:
     })
 
 df = pd.DataFrame(all_data)
+
+os.makedirs("data", exist_ok=True)
+df.to_excel("data/jordan_banks_google_play.xlsx", index=False)
 # Save to Excel
 df.to_excel("Jordan_banks_Reviews_Results -- Google Play Store apps --.xlsx", index=False)
 
