@@ -1,19 +1,13 @@
-# This code shows the app stats --Google Play Store.
-
 from google_play_scraper import app
 import pandas as pd
 import datetime as dt
 import os
 
+os.makedirs("data", exist_ok=True)
+
 banks_ids = [
-    # JCB
     "com.icsfs.jcb.retail",
-    # Etihad
     "com.ofss.fcdb.mobile.android.phone.BAE.launcher"
-
-    # ---------------
-    # complete the rest at work
-
 ]
 
 all_data = []
@@ -25,10 +19,11 @@ for bank in banks_ids:
         country='jo'
     )
 
-    # Convert selected fields into a pandas DataFrame
+    hist = result.get('histogram', [0, 0, 0, 0, 0])
+
     all_data.append({
-        'Store': str("Google Play Store"),
-        'Snapshot_Date': dt.datetime.now(),
+        'Store': "Google Play Store",
+        'Snapshot_Date': dt.date.today().replace(day=1),
         'app_id': result.get('appId'),
         'title': result.get('title'),
         'summary': result.get('summary'),
@@ -40,18 +35,17 @@ for bank in banks_ids:
         'version': result.get('version'),
         'released': result.get('released'),
         'lastUpdatedOn': result.get('lastUpdatedOn'),
-        '1_star_count': int(result.get('histogram')[-5]),
-        '2_star_count': int(result.get('histogram')[-4]),
-        '3_star_count': int(result.get('histogram')[-3]),
-        '4_star_count': int(result.get('histogram')[-2]),
-        '5_star_count': int(result.get('histogram')[-1]),
+        '1_star_count': hist[0],
+        '2_star_count': hist[1],
+        '3_star_count': hist[2],
+        '4_star_count': hist[3],
+        '5_star_count': hist[4],
     })
 
 df = pd.DataFrame(all_data)
 
-os.makedirs("data", exist_ok=True)
-df.to_excel("data/jordan_banks_google_play.xlsx", index=False)
-# Save to Excel
-df.to_excel("Jordan_banks_Reviews_Results -- Google Play Store apps --.xlsx", index=False)
+file_path = "data/Jordan_banks_Reviews_GooglePlay.xlsx"
+df.to_excel(file_path, index=False)
 
-print("Excel file saved successfully.")
+print("Saved:", file_path)
+print("Files in data folder:", os.listdir("data"))
