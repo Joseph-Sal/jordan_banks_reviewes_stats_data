@@ -2,7 +2,7 @@ name: Monthly Banking App Pipeline
 
 on:
   schedule:
-    - cron: "10 20 * * *"
+    - cron: "20 18 * * *"
   workflow_dispatch:
 
 permissions:
@@ -38,4 +38,4 @@ jobs:
 
           git commit -m "Monthly update" || echo "No changes"
 
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+          git push
