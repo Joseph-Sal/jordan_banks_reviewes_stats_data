@@ -2,7 +2,7 @@ name: Monthly Banking App Pipeline
 
 on:
   schedule:
-    - cron: "45 20 * * *"
+    - cron: "46 17 * * *"
   workflow_dispatch:
 
 permissions:
