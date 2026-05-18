@@ -23,7 +23,7 @@ for bank in banks_ids:
 
     all_data.append({
         'Store': "Google Play Store",
-        'Snapshot_Date': dt.date.today().replace(day=1),
+        'Snapshot_Date': dt.date.today(),
         'app_id': result.get('appId'),
         'title': result.get('title'),
         'summary': result.get('summary'),
