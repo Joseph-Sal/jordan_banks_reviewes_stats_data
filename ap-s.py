@@ -1,12 +1,14 @@
+from playwright.sync_api import sync_playwright
 import requests
 import pandas as pd
 import datetime as dt
 import os
+import re
+from bs4 import BeautifulSoup
 
 os.makedirs("data", exist_ok=True)
 
 all_apps_ids = [
-  
     "6502288185",
     "1060048474",
     "1387380275",
@@ -25,36 +27,105 @@ all_apps_ids = [
 ]
 
 country = "jo"
+results = []
 
-all_data = []
+# ---------------------------
+# 1. START PLAYWRIGHT ONCE
+# ---------------------------
+with sync_playwright() as p:
+    browser = p.chromium.launch(headless=True)
+    context = browser.new_context()
 
-for bank in all_apps_ids:
-    url = f"https://itunes.apple.com/lookup?id={bank}&country={country}"
-    data = requests.get(url).json()
-    app_info = data["results"][0]
+    def block(route):
+        if route.request.resource_type in ["image", "font", "media", "stylesheet"]:
+            route.abort()
+        else:
+            route.continue_()
 
-    all_data.append({
-        "Store": "App Store",
-        'Snapshot_Date': dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-        "app_id": app_info.get("bundleId"),
-        "title": app_info.get("trackName"),
-        "summary": app_info.get("trackCensoredName"),
-        "rev_score": app_info.get("averageUserRating"),
-        "num_of_ratings": app_info.get("userRatingCount"),
-        "num_of_interactions": int(0),
-        "installs": int(0),
-        "realInstalls": int(0),
-        "version": app_info.get("version"),
-        "released": pd.to_datetime(app_info.get("releaseDate")).strftime("%B %#d, %Y"),
-        "lastUpdatedOn": pd.to_datetime(app_info.get("currentVersionReleaseDate")).strftime("%B %#d, %Y"),
-        "1_star_count": int(0),
-        "2_star_count": int(0),
-        "3_star_count": int(0),
-        "4_star_count": int(0),
-        "5_star_count": int(0)
-    })
+    context.route("**/*", block)
+    page = context.new_page()
 
-df = pd.DataFrame(all_data)
+    # ---------------------------
+    # 2. LOOP APPS
+    # ---------------------------
+    for app_id in all_apps_ids:
+
+        print(f"Processing {app_id}")
+
+        # ---------------------------
+        # A) iTunes metadata
+        # ---------------------------
+        url = f"https://itunes.apple.com/lookup?id={app_id}&country={country}"
+        data = requests.get(url).json()
+
+        if not data["results"]:
+            continue
+
+        app = data["results"][0]
+        total_ratings = app.get("userRatingCount", 0)
+
+        # ---------------------------
+        # B) Apple Store histogram
+        # ---------------------------
+        app_url = f"https://apps.apple.com/jo/app/id{app_id}"
+
+        page.goto(app_url, wait_until="domcontentloaded")
+        page.wait_for_timeout(800)
+
+        html = page.content()
+        soup = BeautifulSoup(html, "html.parser")
+
+        histogram = {}
+
+        rows = soup.select("[data-testid^='star-row-']")
+
+        for row in rows:
+            testid = row.get("data-testid", "")
+            star = testid.split("-")[-1]
+
+            match = re.search(r"width:\s*([0-9.]+)%", str(row))
+            if match:
+                histogram[star] = float(match.group(1))
+
+        # ensure all stars exist
+        for s in ["1", "2", "3", "4", "5"]:
+            histogram.setdefault(s, 0.0)
+
+        # ---------------------------
+        # C) convert % → counts
+        # ---------------------------
+        star_counts = {
+            f"{s}_star_count": round(total_ratings * histogram[s] / 100)
+            for s in histogram
+        }
+
+        # ---------------------------
+        # D) save row
+        # ---------------------------
+        results.append({
+            "Store": "App Store",
+            "Snapshot_Date": dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            "app_id": app.get("bundleId"),
+            "title": app.get("trackName"),
+            "summary": app.get("trackCensoredName"),
+            "rev_score": app.get("averageUserRating"),
+            "num_of_ratings": total_ratings,
+            "num_of_interactions": 0,
+            "installs": 0,
+            "realInstalls": 0,
+            "version": app.get("version"),
+            "released": pd.to_datetime(app.get("releaseDate")).strftime("%B %d, %Y"),
+            "lastUpdatedOn": pd.to_datetime(app.get("currentVersionReleaseDate")).strftime("%B %d, %Y"),
+
+            **star_counts
+        })
+
+    browser.close()
+
+# ---------------------------
+# 3. SAVE DATAFRAME
+# ---------------------------
+df = pd.DataFrame(results)
 
 file_path = "data/Jordan_banks_Reviews_AppleStore.xlsx"
 df.to_excel(file_path, index=False)
