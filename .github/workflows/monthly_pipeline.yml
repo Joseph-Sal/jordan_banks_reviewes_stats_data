@@ -26,8 +26,10 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run script
-        run: python gp-s.py
+      - name: Run scripts
+        run: |
+          python gp-s.py
+          python ap-s.py
 
       - name: Commit results
         run: |
