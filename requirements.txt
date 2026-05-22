@@ -2,3 +2,4 @@ google-play-scraper
 pandas
 openpyxl
 datetime
+requests
