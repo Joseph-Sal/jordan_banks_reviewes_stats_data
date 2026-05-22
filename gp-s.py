@@ -36,7 +36,7 @@ for bank in banks_ids:
 
     all_data.append({
         'Store': "Google Play Store",
-        'Snapshot_Date': dt.datetime.now(),
+        'Snapshot_Date': dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         'app_id': result.get('appId'),
         'title': result.get('title'),
         'summary': result.get('summary'),
