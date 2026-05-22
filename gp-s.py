@@ -7,7 +7,20 @@ os.makedirs("data", exist_ok=True)
 
 banks_ids = [
     "com.icsfs.jcb.retail",
-    "com.ofss.fcdb.mobile.android.phone.BAE.launcher"
+    "com.ofss.fcdb.mobile.android.phone.BAE.launcher",
+    "com.arabbank.arabimobilev2",
+    "com.hbtf",
+    "com.icsfs.ajib.test",
+    "com.ubanquity.ahli_jo",
+    "com.bankofjordan.mobileapp",
+    "com.mob.jkb",
+    "com.icsfs.mobile.rajhi",
+    "com.capital.cbt",
+    "com.a2a.android.cab",
+    "com.blombank.eblom.jo",
+    "com.fact.jib",
+    "com.icsfs.safwa",
+    "com.iiab.mobilebanking"
 ]
 
 all_data = []
@@ -23,7 +36,7 @@ for bank in banks_ids:
 
     all_data.append({
         'Store': "Google Play Store",
-        'Snapshot_Date': dt.date.today(),
+        'Snapshot_Date': dt.datetime.now(),
         'app_id': result.get('appId'),
         'title': result.get('title'),
         'summary': result.get('summary'),
