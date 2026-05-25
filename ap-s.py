@@ -70,7 +70,7 @@ with sync_playwright() as p:
         app_url = f"https://apps.apple.com/jo/app/id{app_id}"
 
         page.goto(app_url, wait_until="domcontentloaded")
-        page.wait_for_timeout(800)
+        page.wait_for_timeout(1500)
 
         html = page.content()
         soup = BeautifulSoup(html, "html.parser")
